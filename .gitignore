@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.png
+*.RData
+*.rds
+nClimDiv.Rproj
+.Rproj.user.old
+climDivShp
