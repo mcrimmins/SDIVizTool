@@ -2,7 +2,7 @@
 # MAC 12/7/19
 #
 
-# To do: latest date update in selector, plotly heatmap colors don't match, plotly legend names, turn on git for project
+# To do: latest date update in selector, plotly heatmap colors don't match, plotly legend names
 
 # load shiny libraries
 library(shiny)
@@ -50,9 +50,13 @@ add.months= function(date,n) seq(date, by = paste (n, "months"), length = 2)[2]
 # load supporting data from Rdata file generateSupportingData.R
 load("nClimDivApp_Data.RData")
 
-# date list for picker
-date.list<-seq(as.Date("1895/1/1"), add.months(Sys.Date(),-2), "months")
-#latest.date<-reactiveValues()
+# date list for picker - advances on 10th of month
+sysDay<-as.numeric(format(Sys.Date(),"%d"))
+if(sysDay<=9){
+    date.list<-seq(as.Date("1895/1/1"), add.months(Sys.Date(),-2), "months")
+}else{
+    date.list<-seq(as.Date("1895/1/1"), add.months(Sys.Date(),-1), "months")
+}
 latest.date<-max(date.list)
 # ----
 
@@ -72,7 +76,7 @@ ui <- fluidPage(theme=shinytheme('sandstone'),
                     gtag('config', 'UA-155656786-1');
                   </script>")),
                 
-  titlePanel("Standardized Drought Index Visualization Tool"),
+  titlePanel(strong("Standardized Drought Index Visualization Tool")),
   
   sidebarLayout(
     sidebarPanel(
@@ -111,7 +115,7 @@ ui <- fluidPage(theme=shinytheme('sandstone'),
           choices = region.list,
           selected = region.list[[1]][1]
         )),
-      dateRangeInput2("dateRangeMY", "Select date range (1895-present)", startview = "year", minview = "months", maxview = "decades",
+      dateRangeInput2("dateRangeMY", "Select date range for plot (1895-present)", startview = "year", minview = "months", maxview = "decades",
                       start = "1981-01-01", end = latest.date, min = min(date.list), max = latest.date),
       sliderInput("maxTimescale", "Max timescale to display (y-axis):",
                   min = 3, max = 60, value = 60),
@@ -140,37 +144,92 @@ ui <- fluidPage(theme=shinytheme('sandstone'),
                                                            element.style { width: 33.33%; }"))),        
         tabPanel("Interactive SPI & SPEI", 
                  br(),
+                 p("Hover cursor over plots to interrogate values. Use plot image controls to zoom in/out, pan, reset axes, and download snapshot."),
+                 br(),
                  plotlyOutput('SPIPlotly', width = "auto"),
                  br(),
                  plotlyOutput('SPEIPlotly',  width = "auto"),
                  br(),
+                 p("This plot shows the difference between SPI and SPEI values for each month and timescale. Purple colors indicate when 
+                   SPI values were more positive than SPEI and orange colors vice versa. For example, a difference value of 1 could
+                   indicate that the SPEI (-1) is more negative than the SPI (0) reflecting more intense drought conditions."),
                  plotlyOutput('diffPlotly',  width = "auto")
                  ), 
-        tabPanel("Monthly Data", 
+        tabPanel("Explore Monthly Data", 
+                 br(),
+                 p("All of the monthly nClimDiv data used in the calculation of the SPI and SPEI plots are displayed in the plots this page.
+                   The first plot shows the long-term (1895-present) monthly averages of the various climate variables used in the 
+                   calculation of the drought indices. The monthly averages can depict seasonality in temperature, precipitation, and
+                   potential evapotranspiration (PET) that can aid in the interpretation of different drought index timescales."),
                  br(),
                  plotlyOutput('climoPlotly', width = "auto", height = "400px"),
                  br(),
+                 p("Click and drag a box on any part of a time series to zoom in on a specific period. Double click to restore the plot to the full time period."),
                  br(),
-                 plotlyOutput('moClimPlotly', width = "auto", height = "800px")),
+                 plotlyOutput('moClimPlotly', width = "auto",height = "800px")),
         tabPanel("About", 
                  tags$div(
-                   HTML("<html>
-                          <head>
-                          <body>
-                          <h2>About the Standardized Drought Index Explorer</h2>
-                          About the multiscale plots, link to other place to get matlab plots<br>
-                          <br>
-                          About R packages used<br>
-                          <br>
-                          About PET methods<br>
-                          <br>
-                          About nClimDiv data<br>
-                          <br>
-                          Key citations, link to github<br>
-                          <br>
-                          <br>
-                          </body>
-                          </html>"
+                  HTML("<html>
+                        <head>
+                        <meta content='text/html; charset=ISO-8859-1'
+                        http-equiv='content-type'>
+                        <title>SDI Viz Tool Info</title>
+                        </head>
+                        <body>
+                        <h2 style='font-family: Helvetica,Arial,sans-serif;'>About
+                        the Standardized Drought Index Visualization Tool</h2>
+                        <span style='font-family: Helvetica,Arial,sans-serif;'>The
+                        Standardized Drought Index Visualization Tool (SDI Viz Tool) was
+                        developed to be able to quickly generate and customize multiscale
+                        Standardized Precipitation Index (SPI) and Standardized Precipitation
+                        Evapotranspiration Index (SPEI) plots. These plots portray all SPI and
+                        SPEI timescales, allowing for the visualization of both short and
+                        long-term droughts all at once and through time. More information on
+                        how to interpret the plots can be found <a target='_blank'
+                        href='https://cals.arizona.edu/climate/misc/spi/spicontour.png'>here</a>.
+                        More information on the SPI and SPEI can be found at the <a
+                        target='_blank' href='https://wrcc.dri.edu/wwdt/about.php'>Westwide
+                        Drought Tracker</a>.  <br>
+                        <br>
+                        The data used in the creation of the plots is the <a target='_blank'
+                        href='https://www.ncdc.noaa.gov/monitoring-references/maps/us-climate-divisions.php'>NOAA
+                        U.S. Climate Divisional Dataset (nClimDiv)</a>. This dataset is
+                        updated through the end of the previous month, usually by the 10th
+                        of the current month. Maps of the climate divisions and special
+                        regions can be found <a target='_blank'
+                        href='https://www.ncdc.noaa.gov/monitoring-references/'>here</a>.
+                        &nbsp; <br>
+                        </span><br style='font-family: Helvetica,Arial,sans-serif;'>
+                        <span style='font-family: Helvetica,Arial,sans-serif;'>The
+                        SPI and SPEI values were calculated on the full period of record using the <a
+                        href='https://cran.r-project.org/web/packages/SPEI/index.html'
+                        target='_blank'>R SPEI package</a>. SDI Viz Tool code
+                        can be found at </span><a
+                        style='font-family: Helvetica,Arial,sans-serif;'
+                        href='https://github.com/mcrimmins/SDIVizTool'>https://github.com/mcrimmins/SDIVizTool</a>.
+                        <br>
+                        <br>
+                        <div style='text-align: center;'><em
+                        style='font-family: &quot;Helvetica Neue&quot;,Helvetica,Arial,sans-serif; font-size: 14px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; background-color: rgb(255, 255, 255); font-weight: bold; color: black;'><a
+                        href='http://cals.arizona.edu/climate/'
+                        style='background-color: transparent; text-decoration: none;'>Climate
+                        Science Applications Program - University of Arizona Cooperative
+                        Extension</a></em><br>
+                        <br>
+                        <img style='width: 400px; height: 71px;' alt='logo'
+                        src='UA_CSAP_CLIMAS_logos_horiz.png'><br>
+                        <br>
+                        <span
+                        style='color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;,Helvetica,Arial,sans-serif; font-size: 12px; font-style: normal; font-weight: 500; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; background-color: rgb(255, 255, 255); display: inline ! important; float: none;'>©
+                        2020 The Arizona Board of Regents. All contents copyrighted. All rights
+                        reserved.</span><br
+                        style='font-family: Helvetica,Arial,sans-serif;'>
+                        </div>
+                        <span style='font-family: Helvetica,Arial,sans-serif;'></span><br>
+                        <br>
+                        <br>
+                        </body>
+                        </html>"
                    )
                  ))
       )
@@ -232,13 +291,13 @@ server <- function(input, output) {
         rm(datalist)
         # ----
         # update max.date
-        maxYr<-as.numeric(substr(allData[nrow(allData),1],nchar(allData[nrow(allData),1])-3,nchar(allData[nrow(allData),1])))
-        if(length(which(allData[nrow(allData),]==-99.9))==0){
-          mm<-12
-          }else{
-          mm<-which(allData[nrow(allData),]==-99.9)-2
-        }
-        latest.date<-as.Date(paste0(maxYr,"-",mm,"-01"))
+        # maxYr<-as.numeric(substr(allData[nrow(allData),1],nchar(allData[nrow(allData),1])-3,nchar(allData[nrow(allData),1])))
+        # if(length(which(allData[nrow(allData),]==-99.9))==0){
+        #   mm<-12
+        #   }else{
+        #   mm<-which(allData[nrow(allData),]==-99.9)-2
+        # }
+        # latest.date<-as.Date(paste0(maxYr,"-",mm,"-01"))
     
     # end of wait message    
     removeModal()
@@ -541,7 +600,8 @@ server <- function(input, output) {
         
         # PLOTLY SPI HEATMAP ----
         output$SPIPlotly <- renderPlotly({
-          plot_ly(dfSPI, x = ~date, y = ~variable, z = ~value, colors='BrBG', type = "heatmap", zmin=-3, zmax=3) %>%
+          plot_ly(dfSPI, x = ~date, y = ~variable, z = ~value, colors=colorRamp(c("orange3","orange","yellow","white","green","green2","darkgreen")),
+                  type = "heatmap", zmin=-3, zmax=3) %>%
           layout(title = paste0(titleName," Standardized Precipitation Index (", format(as.Date(date1), "%b%Y"),
                                 " - ",format(as.Date(date2), "%b%Y"),")"),
                  xaxis=list(title="Month-Year",
@@ -673,7 +733,8 @@ server <- function(input, output) {
         }, deleteFile = FALSE)
         
         # PLOTLY SPI HEATMAP ----
-        output$SPEIPlotly <- renderPlotly({plot_ly(dfSPEI, x = ~date, y = ~variable, z = ~value, colors='BrBG', type = "heatmap", zmin=-3, zmax=3) %>%
+        output$SPEIPlotly <- renderPlotly({plot_ly(dfSPEI, x = ~date, y = ~variable, z = ~value, colors=colorRamp(c("orange3","orange","yellow","white","green","green2","darkgreen")),
+                                                   type = "heatmap", zmin=-3, zmax=3) %>%
           layout(title = paste0(titleName," Standardized Precipitation-Evapotranspiration Index (", format(as.Date(date1), "%b%Y"),
                                 " - ",format(as.Date(date2), "%b%Y"),")"),
                  xaxis=list(title="Month-Year",
@@ -688,7 +749,7 @@ server <- function(input, output) {
         tempPlotlyDF<-as.data.frame(cbind(dfSPI$variable,dfSPI$value-dfSPEI$value))
         colnames(tempPlotlyDF)<-c("variable","value")
         tempPlotlyDF$date<-dfSPI$date
-        output$diffPlotly <- renderPlotly({plot_ly(tempPlotlyDF, x = ~date, y = ~variable, z = ~value, colors='PuOr', type = "heatmap", zmin=-3, zmax=3) %>%
+        output$diffPlotly <- renderPlotly({plot_ly(tempPlotlyDF, x = ~date, y = ~variable, z = ~value, colors='PuOr', type = "heatmap", zmin=-2, zmax=2) %>%
           layout(title = paste0(titleName," SPI-SPEI (", format(as.Date(date1), "%b%Y"),
                                 " - ",format(as.Date(date2), "%b%Y"),")"),
                  xaxis=list(title="Month-Year",
@@ -763,7 +824,7 @@ server <- function(input, output) {
         #   add_lines()
         # combine in subplots
         pSubPlot<-subplot(tempPlots, tempAnomPlots, precipPlots,
-                          PETPlots, PET_PPlots, nrows = 5, shareX = TRUE)
+                          PETPlots, PET_PPlots, nrows = 6, shareX = TRUE)
         # render Plotly
         output$moClimPlotly <- renderPlotly({pSubPlot<-layout(pSubPlot, title=paste0(titleName," Monthly Climate Data"))
           })
