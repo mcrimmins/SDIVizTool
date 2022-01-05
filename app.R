@@ -142,7 +142,7 @@ ui <- fluidPage(theme=shinytheme('sandstone'),
                  plotOutput("speiImage", width = "100%"),
                  tags$head(tags$style(type="text/css", "#speiImage img { border: 1; max-width: 100%; }
                                                            element.style { width: 33.33%; }"))),        
-        tabPanel("Interactive SPI & SPEI", 
+        tabPanel("Interactive SPI & SPEI",
                  br(),
                  p("Hover cursor over plots to interrogate values. Use plot image controls to zoom in/out, pan, reset axes, and download snapshot."),
                  br(),
@@ -150,24 +150,25 @@ ui <- fluidPage(theme=shinytheme('sandstone'),
                  br(),
                  plotlyOutput('SPEIPlotly',  width = "auto"),
                  br(),
-                 p("This plot shows the difference between SPI and SPEI values for each month and timescale. Purple colors indicate when 
+                 p("This plot shows the difference between SPI and SPEI values for each month and timescale. Purple colors indicate when
                    SPI values were more positive than SPEI and orange colors vice versa. For example, a difference value of 1 could
                    indicate that the SPEI (-1) is more negative than the SPI (0) reflecting more intense drought conditions."),
                  plotlyOutput('diffPlotly',  width = "auto")
-                 ), 
-        tabPanel("Explore Monthly Data", 
+                 ),
+        tabPanel("Explore Monthly Data",
                  br(),
-                 p("All of the monthly nClimDiv data used in the calculation of the SPI and SPEI plots are displayed in the plots this page.
-                   The first plot shows the long-term (1895-present) monthly averages of the various climate variables used in the 
+                 p("COMING SOON -- All of the monthly nClimDiv data used in the calculation of the SPI and SPEI plots are displayed in the plots this page.
+                   The first plot shows the long-term (1895-present) monthly averages of the various climate variables used in the
                    calculation of the drought indices. The monthly averages can depict seasonality in temperature, precipitation, and
                    potential evapotranspiration (PET) that can aid in the interpretation of different drought index timescales."),
                  br(),
-                 plotlyOutput('climoPlotly', width = "auto", height = "400px"),
+                 #plotlyOutput('climoPlotly', width = "auto", height = "400px"),
                  br(),
                  p("Click and drag a box on any part of a time series to zoom in on a specific period. Double click to restore the plot to the full time period."),
-                 br(),
-                 plotlyOutput('moClimPlotly', width = "auto",height = "800px")),
-        tabPanel("About", 
+                 br()
+                 #plotlyOutput('moClimPlotly', width = "auto",height = "800px")
+                 ),
+        tabPanel("About",
                  tags$div(
                   HTML("<html>
                         <head>
@@ -530,7 +531,7 @@ server <- function(input, output) {
           #scale_y_continuous(breaks = seq(-100, 100, 20)) +
           scale_fill_manual(values = c("orange4", "darkgreen"))+
           scale_x_date(labels = date_format("%Y"), breaks='2 years', expand=c(0,0),
-                       limits = c(as.Date(date1),as.Date(date2)))+
+                       limits = c(as.Date(date1),add.months(as.Date(date2),1)))+
           ylab("Precip Anom (in.)")+
           xlab("Month-Year")+
           theme_bw()+
@@ -662,7 +663,7 @@ server <- function(input, output) {
           #scale_y_continuous(breaks = seq(-100, 100, 20)) +
           scale_fill_manual(values = c("orange4", "darkgreen"))+
           scale_x_date(labels = date_format("%Y"), breaks='2 years', expand=c(0,0),
-                       limits = c(as.Date(date1),as.Date(date2)))+
+                       limits = c(as.Date(date1),add.months(as.Date(date2),1)))+
           ylab("P-PET Anom (in.)")+
           xlab("Month-Year")+
           theme_bw()+
@@ -756,101 +757,101 @@ server <- function(input, output) {
                             range = c(as.Date(date1),as.Date(date2))),
                  yaxis=list(title="Timescale (mos)",
                             range = c(0,maxScale))
-          ) 
+          )
         })
         # ---- 
         
-        # interactive plots of temp, precip, PET, Anoms ----
-        # temp Plotly
-        tempPlotlyVars<-tempDataMelt[,c(3,5,6,7)]
-        colnames(tempPlotlyVars)<-c("date","T-max(F)","T-mean(F)","T-min(F)")
-        tempPlots<-tempPlotlyVars %>%
-          tidyr::gather(variable,value,-date) %>%
-          transform(id = as.integer(factor(variable))) %>%
-          plot_ly(x = ~date, y = ~value, color = ~variable, colors = c("dodgerblue4","dimgray","firebrick"),
-                  yaxis = ~paste0("y", id)) %>%
-          add_lines()
-        # temp Anom Plotly
-        tempPlotlyVars<-tempDataMelt[,c(3,15)]
-        colnames(tempPlotlyVars)<-c("date","T-mean Anom(F)")
-        tempAnomPlots<-tempPlotlyVars %>%
-          tidyr::gather(variable,value,-date) %>%
-          transform(id = as.integer(factor(variable))) %>%
-          plot_ly(x = ~date, y = ~value, color = ~variable, colors = "dimgray",
-                  yaxis = ~paste0("y", id)) %>%
-          add_lines()
-        # precip Plotly
-        tempPlotlyVars<-tempDataMelt[,c(3,4,14)]
-        colnames(tempPlotlyVars)<-c("date","Precip(in)","PrecipAnom(in)")
-        precipPlots<-tempPlotlyVars %>%
-          tidyr::gather(variable,value,-date) %>%
-          transform(id = as.integer(factor(variable))) %>%
-          plot_ly(x = ~date, y = ~value, color = ~variable, colors = c("forestgreen","darkslateblue"),
-                  yaxis = ~paste0("y", id)) %>%
-          add_lines()
-        # Precip Anom Plotly
-        # tempPlotlyVars<-tempDataMelt[,c(3,14)]
-        # precipAnomPlots<-tempPlotlyVars %>%
+        # # interactive plots of temp, precip, PET, Anoms ----
+        # # temp Plotly
+        # tempPlotlyVars<-tempDataMelt[,c(3,5,6,7)]
+        # colnames(tempPlotlyVars)<-c("date","T-max(F)","T-mean(F)","T-min(F)")
+        # tempPlots<-tempPlotlyVars %>%
         #   tidyr::gather(variable,value,-date) %>%
         #   transform(id = as.integer(factor(variable))) %>%
-        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = "darkgreen",
+        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = c("dodgerblue4","dimgray","firebrick"),
         #           yaxis = ~paste0("y", id)) %>%
         #   add_lines()
-        # PET Plotly
-        tempPlotlyVars<-tempDataMelt[,c(3,8)]
-        colnames(tempPlotlyVars)<-c("date","PET(in)")
-        PETPlots<-tempPlotlyVars %>%
-          tidyr::gather(variable,value,-date) %>%
-          transform(id = as.integer(factor(variable))) %>%
-          plot_ly(x = ~date, y = ~value, color = ~variable, colors = "darkgoldenrod",
-                  yaxis = ~paste0("y", id)) %>%
-          add_lines()
-        # PET_P Plotly
-        tempPlotlyVars<-tempDataMelt[,c(3,9,17)]
-        colnames(tempPlotlyVars)<-c("date","Precip-PET(in)","Precip-PETAnom(in)")
-        PET_PPlots<-tempPlotlyVars %>%
-          tidyr::gather(variable,value,-date) %>%
-          transform(id = as.integer(factor(variable))) %>%
-          plot_ly(x = ~date, y = ~value, color = ~variable, colors = c("darkorange","darkorchid4"),
-                  yaxis = ~paste0("y", id)) %>%
-          add_lines()
-        # Precip Anom Plotly
-        # tempPlotlyVars<-tempDataMelt[,c(3,17)]
-        # PET_PAnomPlots<-tempPlotlyVars %>%
+        # # temp Anom Plotly
+        # tempPlotlyVars<-tempDataMelt[,c(3,15)]
+        # colnames(tempPlotlyVars)<-c("date","T-mean Anom(F)")
+        # tempAnomPlots<-tempPlotlyVars %>%
         #   tidyr::gather(variable,value,-date) %>%
         #   transform(id = as.integer(factor(variable))) %>%
-        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = "darkgreen",
+        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = "dimgray",
         #           yaxis = ~paste0("y", id)) %>%
         #   add_lines()
-        # combine in subplots
-        pSubPlot<-subplot(tempPlots, tempAnomPlots, precipPlots,
-                          PETPlots, PET_PPlots, nrows = 6, shareX = TRUE)
-        # render Plotly
-        output$moClimPlotly <- renderPlotly({pSubPlot<-layout(pSubPlot, title=paste0(titleName," Monthly Climate Data"))
-          })
-        # ----      
-        
-        # climograph https://plot.ly/r/multiple-axes/ ----
-        ay <- list(
-          tickfont = list(color = "red"),
-          overlaying = "y",
-          side = "right",
-          title = "Temp(F)"
-        )
-        pClimo <- plot_ly() %>%
-          add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgPrecip, name = "Precip(in)") %>%
-          add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgPET, name = "PET(in)") %>%
-          add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgP_PET, name = "P-PET(in)") %>%
-          add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgTemp, name = "Temp(F)", yaxis = "y2") %>%
-          layout(
-            title = paste0(titleName," Monthly Average Climate"), yaxis2 = ay,
-            xaxis = list(title="month",
-                         range=c(1,12)),
-            yaxis = list(title="inches")
-          )
-        
-        output$climoPlotly <- renderPlotly({pClimo
-          })
+        # # precip Plotly
+        # tempPlotlyVars<-tempDataMelt[,c(3,4,14)]
+        # colnames(tempPlotlyVars)<-c("date","Precip(in)","PrecipAnom(in)")
+        # precipPlots<-tempPlotlyVars %>%
+        #   tidyr::gather(variable,value,-date) %>%
+        #   transform(id = as.integer(factor(variable))) %>%
+        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = c("forestgreen","darkslateblue"),
+        #           yaxis = ~paste0("y", id)) %>%
+        #   add_lines()
+        # # Precip Anom Plotly
+        # # tempPlotlyVars<-tempDataMelt[,c(3,14)]
+        # # precipAnomPlots<-tempPlotlyVars %>%
+        # #   tidyr::gather(variable,value,-date) %>%
+        # #   transform(id = as.integer(factor(variable))) %>%
+        # #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = "darkgreen",
+        # #           yaxis = ~paste0("y", id)) %>%
+        # #   add_lines()
+        # # PET Plotly
+        # tempPlotlyVars<-tempDataMelt[,c(3,8)]
+        # colnames(tempPlotlyVars)<-c("date","PET(in)")
+        # PETPlots<-tempPlotlyVars %>%
+        #   tidyr::gather(variable,value,-date) %>%
+        #   transform(id = as.integer(factor(variable))) %>%
+        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = "darkgoldenrod",
+        #           yaxis = ~paste0("y", id)) %>%
+        #   add_lines()
+        # # PET_P Plotly
+        # tempPlotlyVars<-tempDataMelt[,c(3,9,17)]
+        # colnames(tempPlotlyVars)<-c("date","Precip-PET(in)","Precip-PETAnom(in)")
+        # PET_PPlots<-tempPlotlyVars %>%
+        #   tidyr::gather(variable,value,-date) %>%
+        #   transform(id = as.integer(factor(variable))) %>%
+        #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = c("darkorange","darkorchid4"),
+        #           yaxis = ~paste0("y", id)) %>%
+        #   add_lines()
+        # # Precip Anom Plotly
+        # # tempPlotlyVars<-tempDataMelt[,c(3,17)]
+        # # PET_PAnomPlots<-tempPlotlyVars %>%
+        # #   tidyr::gather(variable,value,-date) %>%
+        # #   transform(id = as.integer(factor(variable))) %>%
+        # #   plot_ly(x = ~date, y = ~value, color = ~variable, colors = "darkgreen",
+        # #           yaxis = ~paste0("y", id)) %>%
+        # #   add_lines()
+        # # combine in subplots
+        # pSubPlot<-subplot(tempPlots, tempAnomPlots, precipPlots,
+        #                   PETPlots, PET_PPlots, nrows = 6, shareX = TRUE)
+        # # render Plotly
+        # output$moClimPlotly <- renderPlotly({pSubPlot<-layout(pSubPlot, title=paste0(titleName," Monthly Climate Data"))
+        #   })
+        # # ----      
+        # 
+        # # climograph https://plot.ly/r/multiple-axes/ ----
+        # ay <- list(
+        #   tickfont = list(color = "red"),
+        #   overlaying = "y",
+        #   side = "right",
+        #   title = "Temp(F)"
+        # )
+        # pClimo <- plot_ly() %>%
+        #   add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgPrecip, name = "Precip(in)") %>%
+        #   add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgPET, name = "PET(in)") %>%
+        #   add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgP_PET, name = "P-PET(in)") %>%
+        #   add_lines(x = as.numeric(moAvg$variable), y = moAvg$moAvgTemp, name = "Temp(F)", yaxis = "y2") %>%
+        #   layout(
+        #     title = paste0(titleName," Monthly Average Climate"), yaxis2 = ay,
+        #     xaxis = list(title="month",
+        #                  range=c(1,12)),
+        #     yaxis = list(title="inches")
+        #   )
+        # 
+        # output$climoPlotly <- renderPlotly({pClimo
+        #   })
         removeModal()
         
     } )
